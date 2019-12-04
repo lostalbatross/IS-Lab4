@@ -1,7 +1,7 @@
 function pozymiai = pozymiai_raidems_atpazinti(pavadinimas, pvz_eiluciu_sk)
 %pozymiai = pozymiai_raidems_atpazinti(pavadinimas, pvz_eiluciu_sk)
 %taikymo pavyzdys:
-pozymiai = pozymiai_raidems_atpazinti('test_data.png', 9) 
+pozymiai = pozymiai_raidems_atpazinti('train_data.png', 9); 
 
 % Scanning a sample image
 V = imread(pavadinimas);
