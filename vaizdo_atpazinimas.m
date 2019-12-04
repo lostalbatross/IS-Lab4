@@ -95,7 +95,7 @@ for k = 1:raidziu_sk
         case 11
             atsakymas = [atsakymas, 'J'];
         case 12
-            atsakymas = [atsakymas, 'J'];
+            atsakymas = [atsakymas, 'O'];
     end
 end
 % display the result in the command window
