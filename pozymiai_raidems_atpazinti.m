@@ -1,109 +1,108 @@
 function pozymiai = pozymiai_raidems_atpazinti(pavadinimas, pvz_eiluciu_sk)
-%%  pozymiai = pozymiai_raidems_atpazinti(pavadinimas, pvz_eiluciu_sk)
-% taikymo pavyzdys:
-% pozymiai = pozymiai_raidems_atpazinti('test_data.png', 8) 
-%
-%%
-% Vaizdo su pavyzdşiais nuskaitymas
+%pozymiai = pozymiai_raidems_atpazinti(pavadinimas, pvz_eiluciu_sk)
+%taikymo pavyzdys:
+pozymiai = pozymiai_raidems_atpazinti('test_data.png', 9) 
+
+% Scanning a sample image
 V = imread(pavadinimas);
 figure(12), imshow(V)
-%% Raidşiø iğkirpimas ir sudëliojimas á kintamojo 'objektai' celes
+% Cut and paste letters into the cells of the variable 'objects'
 V_pustonis = rgb2gray(V);
-% vaizdo keitimo dvejetainiu slenkstinës reikğmës paieğka
+% threshold conversion value search for image conversion
 slenkstis = graythresh(V_pustonis);
-% pustonio vaizdo keitimas dvejetainiu
+% converting halftone image to binary
 V_dvejetainis = im2bw(V_pustonis,slenkstis);
-% rezultato atvaizdavimas
+% rendering the result
 figure(1), imshow(V_dvejetainis)
-% vaizde esanèiø objektø kontûrø paieğka
+% image is the object contrast search
 V_konturais = edge(uint8(V_dvejetainis));
-% rezultato atvaizdavimas
+% rendering the result
 figure(2),imshow(V_konturais)
-% objektø kontûrø uşpildymas 
-se = strel('square',7); % struktûrinis elementas uşpildymui
+% object control 
+se = strel('square',7); % structural element for filling
 V_uzpildyti = imdilate(V_konturais, se); 
-% rezultato atvaizdavimas
+% rendering the result
 figure(3),imshow(V_uzpildyti)
-% tuğtumø objetø viduje uşpildymas
+% tutum objeÑt inside filling
 V_vientisi= imfill(V_uzpildyti,'holes');
-% rezultato atvaizdavimas
+% rendering the result
 figure(4),imshow(V_vientisi)
-% vientisø objektø dvejetainiame vaizde numeravimas
-[O_suzymeti Skaicius] = bwlabel(V_vientisi);
-% apskaièiuojami objektø dvejetainiame vaizde poşymiai
+% integer object binary image numbering
+[O_suzymeti, Skaicius] = bwlabel(V_vientisi);
+% calculating objects features in the binary image
 O_pozymiai = regionprops(O_suzymeti);
-% nuskaitomos poşymiø - objektø ribø koordinaèiø - reikğmës
+% readable for poymi - object rib coordinate purposes
 O_ribos = [O_pozymiai.BoundingBox];
-% kadangi ribà nusako 4 koordinatës, pergrupuojame reikğmes
-O_ribos = reshape(O_ribos,[4 Skaicius]); % Skaicius - objektø skaièius
-% nuskaitomos poşymiø - objektø masës centro koordinaèiø - reikğmës
+% since the bound is defined by 4 coordinates, we regroup the values
+O_ribos = reshape(O_ribos,[4 Skaicius]); % Number is the number of objects
+% readable poymi - object mass center coordinates
 O_centras = [O_pozymiai.Centroid];
-% kadangi centrà nusako 2 koordinatës, pergrupuojame reikğmes
+% since the center defines 2 coordinates, we regroup the needs
 O_centras = reshape(O_centras,[2 Skaicius]);
 O_centras = O_centras';
-% pridedamas kiekvienam objektui vaize numeris (treèias stulpelis ğalia koordinaèiø)
+% each object in the image is added to the image (third column, aliases)
 O_centras(:,3) = 1:Skaicius;
-% surûğiojami objektai pagal x koordinatæ - stulpelá
+% sorted objects by x coordinate - column
 O_centras = sortrows(O_centras,2);
-% rûğiojama atsişvelgiant á pavyzdşiø eiluèiø ir raidşiø skaièiø
+% sorted by string and alphanumeric examples
 raidziu_sk = Skaicius/pvz_eiluciu_sk;
 for k = 1:pvz_eiluciu_sk
     O_centras((k-1)*raidziu_sk+1:k*raidziu_sk,:) = ...
         sortrows(O_centras((k-1)*raidziu_sk+1:k*raidziu_sk,:),3);
 end
-% iğ dvejetainio vaizdo pagal objektø ribas iğkerpami vaizdo fragmentai
+% snippets of image that are binned within the boundaries of the object
 for k = 1:Skaicius
     objektai{k} = imcrop(V_dvejetainis,O_ribos(:,O_centras(k,3)));
 end
-% vieno iğ vaizdo fragmentø atvaizdavimas
+% rendering one fragment of an image
 figure(5),
 for k = 1:Skaicius
    subplot(pvz_eiluciu_sk,raidziu_sk,k), imshow(objektai{k})
 end
-% vaizdo fragmentai apkerpami, panaikinant fonà iğ krağtø (pagal staèiakampá)
+% snippets of the image are cropped, eliminating background shake (by rectangle)
 
-for k = 1:Skaicius % Skaicius = 88, jei yra 88 raidës
+for k = 1:Skaicius % Number = 108 for 108 letters
     V_fragmentas = objektai{k};
-    % nustatomas kiekvieno vaizdo fragmento dydis
+    % the size of each image fragment is determined
     [aukstis, plotis] = size(V_fragmentas);
     
-    % 1. Baltø stulpeliø naikinimas
-    % apskaièiuokime kiekvieno stulpelio sumà
+    % 1. Deletion of Balt columns
+    % let's calculate the sum of each column
     stulpeliu_sumos = sum(V_fragmentas,1);
-    % naikiname tuos stulpelius, kur suma lygi aukğèiui
+    % we delete those columns where the sum equals the height
     V_fragmentas(:,stulpeliu_sumos == aukstis) = [];
-    % perskaièiuojamas objekto dydis
+    % recalculating the size of the object
     [aukstis, plotis] = size(V_fragmentas);
-    % 2. Baltø eiluèiø naikinimas
-    % apskaièiuokime kiekvienos seilutës sumà
+    % 2. Deleting Balt Rows
+    % let's calculate the sum of each salivary
     eiluciu_sumos = sum(V_fragmentas,2);
-    % naikiname tas eilutes, kur suma lygi ploèiui
+    % we delete the rows where the sum equals the width
     V_fragmentas(eiluciu_sumos == plotis,:) = [];
-    objektai{k}=V_fragmentas;% árağome vietoje neapkarpyto
+    objektai{k}=V_fragmentas;% we put it in place of the uncut
 end
-% vieno iğ vaizdo fragmentø atvaizdavimas
+% rendering one fragment of an image
 figure(6),
 for k = 1:Skaicius
    subplot(pvz_eiluciu_sk,raidziu_sk,k), imshow(objektai{k})
 end
-%%
-%% Suvienodiname vaizdo fragmentø dydşius iki 70x50
+
+% We unify image size up to 70x50
 for k=1:Skaicius
     V_fragmentas=objektai{k};
     V_fragmentas_7050=imresize(V_fragmentas,[70,50]);
-    % padalinkime vaizdo fragmentà á 10x10 dydşio dalis
+    % let's divide the image fragment into 10x10 size
     for m=1:7
         for n=1:5
-            % apskaièiuokime kiekvienos dalies vidutiná ğviesumà 
+            % let's calculate the average guest for each part 
             Vid_sviesumas_eilutese=sum(V_fragmentas_7050((m*10-9:m*10),(n*10-9:n*10)));
             Vid_sviesumas((m-1)*5+n)=sum(Vid_sviesumas_eilutese);
         end
     end
-    % 10x10 dydşio dalyje maksimali ğviesumo galima reikğmë yra 100
-    % normuokime ğviesumo reikğmes intervale [0, 1]
+    % In the 10x10 size section, the maximum visibility can be used for is 100
+    % normalize the brightness value in the range [0, 1]
     Vid_sviesumas = ((100-Vid_sviesumas)/100);
-    % rezultatà (poşmius) neuronø tinklui patogiau pateikti stulpeliu
+    % it is more convenient for the neural network to display the result (pomius) in a column
     Vid_sviesumas = Vid_sviesumas(:);
-    % iğsaugome apskaièiuotus poşymius á bendrà kintamàjá
+    % we save the calculated attributes in common variable j
     pozymiai{k} = Vid_sviesumas;
 end
